@@ -8,11 +8,13 @@ import org.springframework.web.multipart.MultipartFile;
 public interface RecordService {
     RecordResponse uploadFile(MultipartFile multipartFile, Webhook request);
 
-    RecordResponse deleteFile(String id);
+    RecordResponse deleteFile(Webhook id);
 
     RecordResponse updateFile(MultipartFile multipartFile, Webhook request);
 
     RecordResponse getAllFileInfo();
+
+    RecordResponse getFileByCallId(String callId);
 
     RecordResponse getFileById(String id);
 

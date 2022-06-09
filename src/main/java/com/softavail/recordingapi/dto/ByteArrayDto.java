@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 public class ByteArrayDto {
     String callId;
+    String id;
     String fileName;
     String from;
     String to;

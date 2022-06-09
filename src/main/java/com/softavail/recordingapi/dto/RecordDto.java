@@ -14,5 +14,6 @@ public class RecordDto {
     String name;
     String type;
     String id;
+    String callId;
     String status;
 }
