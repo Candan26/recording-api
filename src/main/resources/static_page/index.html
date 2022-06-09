@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TEST SCREEN FILE UPLOAD</title>
+    <script>
+        function onSubmit(){
+            const formData = new FormData();
+            formData.append("mediaFile", document.forms["userForm"].file.files[0]);
+            formData.append('metadata', new Blob([JSON.stringify({
+                "filename": document.getElementById("name").value,
+                "callId": document.getElementById("callId").value,
+                "from": document.getElementById("from").value,
+                "to": document.getElementById("to").value,
+                "started": document.getElementById("started").value,
+                "duration": document.getElementById("duration").value,
+            })], {
+                type: "application/json"
+            }));
+            fetch('http://localhost:8080/record/upload', {
+                method: 'post',
+                body: formData
+            }).then(function(response){
+                if (response.status !== 200) {
+                    alert("There was an error!");
+                } else {
+                    alert("Request successful");
+                }
+            }).catch(function(err) {
+                alert("There was an error!" + err);
+            });
+        }
+    </script>
+</head>
+<body>
+<form name="userForm">
+    <label> File : </label>  <br/><input name="file" type="file"><br/>
+    <label> name : </label> <br/><input id="name" name="name"/><br/>
+    <label> call-id : </label> <br/><input id="callId" name="callId"/><br/>
+    <label> from : </label> <br/> <input id="from" name="from"/><br/>
+    <label> to : </label> <br/> <input id="to" name="to"/><br/>
+    <label> started : </label> <br/> <input id="started" name="started" type='number'/><br/>
+    <label> duration : </label> <br/> <input id="duration" name="duration" type='number'/><br/>
+    <input type="button" value="Submit" id="submit" onclick="onSubmit(); return false;"/>
+</form>
+</body>
+</html>
