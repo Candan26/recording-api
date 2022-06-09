@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "19aa3f77-8f7a-43f0-87bc-8949a2267c5b",
+		"name": "recordRequestSamples",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "uploadFile",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data; boundary=<calculated when request is sent>",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "mediaFile",
+							"type": "file",
+							"src": "/C:/Users/Lenovo/Desktop/candan_resume.pdf"
+						},
+						{
+							"key": "metadata",
+							"value": "{\"filename\":\"asodcjijfvodfv.wav\",\"callId\":\"osdcm49ti0d9kvd09f\",\"from\":\"11122334455\",\"to\":\"359888776655\",\"started\":1625906889,\"duration\":350}",
+							"contentType": "application/json",
+							"type": "default"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/record/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"upload"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getAllFile",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/record/getAll?metadata",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"getAll"
+					],
+					"query": [
+						{
+							"key": "metadata",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getByCallId",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/record/findByCallId/osdcm49ti0d9kvd09f",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"findByCallId",
+						"osdcm49ti0d9kvd09f"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "callWithSpec",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/record/getAll/0/15?fileExtension=pdf&filename=s",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"getAll",
+						"0",
+						"15"
+					],
+					"query": [
+						{
+							"key": "fileExtension",
+							"value": "pdf"
+						},
+						{
+							"key": "filename",
+							"value": "s"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deleteFile",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"id\":\"402881408148b47e018148b4abec0000\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/record/delete",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"delete"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "updateFile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "mediaFile",
+							"type": "file",
+							"src": "/C:/Users/Lenovo/Desktop/__pln_budged.PNG"
+						},
+						{
+							"key": "metadata",
+							"value": "{\n\"filename\": \"update\",\n\"call-id\": \"123\",\n\"from\": \"11122334455\",\n\"to\": \"359888776655\",\n\"started\": 34,\n\"duration\": 2324\n}",
+							"contentType": "application/json",
+							"type": "default"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/record/update",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"record",
+						"update"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
