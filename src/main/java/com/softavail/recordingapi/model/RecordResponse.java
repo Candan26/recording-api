@@ -24,10 +24,4 @@ public class RecordResponse {
         this.error = error;
     }
 
-    public RecordResponse(String returnCode, LocalDateTime timeStamp, Object data, Error error) {
-        this.timeStamp = timeStamp;
-        this.returnCode = returnCode;
-        this.data = data;
-        this.error = error;
-    }
 }

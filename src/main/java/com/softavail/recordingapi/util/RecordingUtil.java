@@ -6,7 +6,6 @@ public class RecordingUtil {
     public static final String INSERTED = "FILE INSERTED";
     public static final String DELETED = "FILE DELETED";
     public static final String UPDATED = "FILE UPDATED";
-    public static final String TEST = "FILE FOR TEST";
 
     public static final String ERROR_UNPROCESSABLE_EXTENSION = "The extension is not valid please shar valid extension";
     public static final String ERROR_UNPROCESSABLE_FILE_BRACE = "The file cannot find in this params please insert a file name or id";
