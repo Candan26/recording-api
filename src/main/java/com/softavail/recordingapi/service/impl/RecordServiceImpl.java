@@ -137,7 +137,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public RecordResponse getFileById(String id) {
         Optional<Webhook> webhook = webhookRepository.findById(id);
-        if (webhook.isEmpty()) {
+        if (webhook ==null || webhook.isEmpty()) {
             log.debug("File table is empty");
             return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, ERROR_NO_CONTENT_TABLE));
         }
