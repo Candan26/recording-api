@@ -11,4 +11,8 @@ public class RecordingUtil {
     public static final String ERROR_UNPROCESSABLE_FILE_BRACE = "The file cannot find in this params please insert a file name or id";
     public static final String ERROR_FILE_NOT_IN_DB = "The file does not exist in Db please check  with valid id or name";
     public static final String ERROR_NO_CONTENT_TABLE = "Table does not have any element";
+    public static final String ERROR_URL_ENDPOINT = "URI is not absolute";
+    public static final String ERROR_PARSING_EXCEPTION = "The object cannot parse to json format";
+
+
 }

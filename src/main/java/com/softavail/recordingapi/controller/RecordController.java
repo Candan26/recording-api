@@ -2,6 +2,7 @@ package com.softavail.recordingapi.controller;
 
 import com.softavail.recordingapi.entity.Webhook;
 import com.softavail.recordingapi.model.RecordResponse;
+import com.softavail.recordingapi.model.WebhookRequest;
 import com.softavail.recordingapi.service.RecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +28,27 @@ import org.springframework.web.multipart.MultipartFile;
 public class RecordController {
 
     private final RecordService recordService;
+
+
+    @CrossOrigin(origins = "*")
+    @PostMapping(value = "/webhook",consumes = "application/json")
+    @ApiOperation(value = "Get application json file from recorder")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "File sent to processor"),
+            @ApiResponse(code = 500, message = "If storage service get exception.")})
+    public ResponseEntity<?> uploadWebhook(@RequestBody WebhookRequest request) {
+        try {
+            RecordResponse response =recordService.importDataAndSend(request);
+            if (response.getError() != null) {
+                return new ResponseEntity<>(response, response.getError().getStatus());
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception ex) {
+            log.error("Exception on ", ex);
+            return new ResponseEntity<>("Service Error " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @CrossOrigin(origins = "*")
     @PostMapping(value = "/upload")
