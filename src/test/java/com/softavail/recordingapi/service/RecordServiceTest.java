@@ -1,5 +1,6 @@
 package com.softavail.recordingapi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softavail.recordingapi.dto.ByteArrayDto;
 import com.softavail.recordingapi.dto.RecordDto;
 import com.softavail.recordingapi.entity.Webhook;
@@ -11,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,11 +34,13 @@ class RecordServiceTest {
     private  RecordService recordService;
     private  RecordMapper recordMapper;
     private  WebhookRepository webhookRepository;
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         recordMapper = Mockito.mock(RecordMapper.class);
         webhookRepository = Mockito.mock(WebhookRepository.class);
-        recordService= new RecordServiceImpl(webhookRepository,recordMapper);
+        recordService= new RecordServiceImpl(webhookRepository,recordMapper,objectMapper);
         List<String> extension = Arrays.asList("PNG","png","jpeg","jpg","docx","pdf","xlsx","ogg");
         ReflectionTestUtils.setField(recordService, "EXTENSION_LIST", extension);
     }

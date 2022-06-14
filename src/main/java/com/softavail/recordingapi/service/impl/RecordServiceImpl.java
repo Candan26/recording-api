@@ -1,24 +1,37 @@
 package com.softavail.recordingapi.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softavail.recordingapi.entity.Webhook;
 import com.softavail.recordingapi.mapper.RecordMapper;
 import com.softavail.recordingapi.model.Error;
 import com.softavail.recordingapi.model.RecordResponse;
+import com.softavail.recordingapi.model.WebhookRequest;
 import com.softavail.recordingapi.repository.WebhookRepository;
 import com.softavail.recordingapi.service.RecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,8 +48,16 @@ public class RecordServiceImpl implements RecordService {
 
     private final RecordMapper recordMapper;
 
+    private final  ObjectMapper objectMapper;
+
     @Value("#{'${extension.list}'.split(',')}")
-     private List<String> EXTENSION_LIST;
+    private List<String> EXTENSION_LIST;
+
+    @Value("${file.system.directory.path}")
+    private  String fileDirectory;
+
+    @Value("${endpoint.processor}")
+    private String processorEndpoint;
 
     @Override
     public RecordResponse uploadFile(MultipartFile mf, Webhook request) {
@@ -149,6 +170,37 @@ public class RecordServiceImpl implements RecordService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Webhook> filePage = webhookRepository.findAll(spec,pageable);
         return new RecordResponse(SUCCEED, recordMapper.recordPageToDtoList(filePage), null);
+    }
+
+    @Override
+    public RecordResponse importDataAndSend(WebhookRequest request) {
+        try {
+            File file = new File( fileDirectory+request.getFilename());
+            // getting the file from disk
+            FileSystemResource value = new FileSystemResource(file);
+            // adding headers to the api
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type","application/json; multipart/form-data; video/ogg");
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("mediaFile", value);
+
+            body.add("metadata",objectMapper.writeValueAsString(request));
+            HttpEntity<MultiValueMap<String, Object>> requestEntity= new HttpEntity<>(body, headers);
+
+            RestTemplate restTemplate = new RestTemplate();
+            log.info(requestEntity.toString());
+            String result = restTemplate.postForEntity(processorEndpoint, requestEntity,
+                    String.class).getBody();
+            return new RecordResponse(SUCCEED, result, null);
+        }catch (IllegalArgumentException iae){
+            log.error("IllegalArgumentException on ", iae);
+            return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, ERROR_URL_ENDPOINT));
+        }
+        catch (JsonProcessingException jpe) {
+            log.error("JsonProcessingException on ", jpe);
+            return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, ERROR_PARSING_EXCEPTION));
+        }
     }
 }
 
