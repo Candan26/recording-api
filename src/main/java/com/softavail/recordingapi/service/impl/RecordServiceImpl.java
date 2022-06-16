@@ -12,6 +12,17 @@ import com.softavail.recordingapi.service.RecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.FormBodyPart;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -21,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.*;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,13 +40,12 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.*;
 
 import static com.softavail.recordingapi.util.RecordingUtil.*;
 
@@ -174,33 +185,75 @@ public class RecordServiceImpl implements RecordService {
 
     @Override
     public RecordResponse importDataAndSend(WebhookRequest request) {
+        String errorMessage;
+
         try {
+            /*
             File file = new File( fileDirectory+request.getFilename());
-            // getting the file from disk
             FileSystemResource value = new FileSystemResource(file);
-            // adding headers to the api
             HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-Type","application/json; multipart/form-data; video/ogg");
-
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("mediaFile", value);
-
-            body.add("metadata",objectMapper.writeValueAsString(request));
-            HttpEntity<MultiValueMap<String, Object>> requestEntity= new HttpEntity<>(body, headers);
-
             RestTemplate restTemplate = new RestTemplate();
-            log.info(requestEntity.toString());
-            String result = restTemplate.postForEntity(processorEndpoint, requestEntity,
-                    String.class).getBody();
-            return new RecordResponse(SUCCEED, result, null);
-        }catch (IllegalArgumentException iae){
-            log.error("IllegalArgumentException on ", iae);
-            return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, ERROR_URL_ENDPOINT));
+            MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            multipartBodyBuilder.part("metadata",objectMapper.writeValueAsString(request),MediaType.APPLICATION_JSON);
+            multipartBodyBuilder.part("mediaFile", value,MediaType.MULTIPART_FORM_DATA);
+            // multipart/form-data request body
+            MultiValueMap<String, HttpEntity<?>> multipartBody = multipartBodyBuilder.build();
+            // The complete http request body.
+            HttpEntity<MultiValueMap<String, HttpEntity<?>>> httpEntity = new HttpEntity<>(multipartBody, headers);
+            log.info(httpEntity.toString());
+            //String result = restTemplate.postForEntity(processorEndpoint, httpEntity, String.class).getBody();
+            //return new RecordResponse(SUCCEED, result, null);
+            */
+            HttpClient httpclient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(new URI(processorEndpoint));
+            httpPost.setHeader("Content-type", "multipart/form-data");
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addTextBody("metadata",objectMapper.writeValueAsString(request),ContentType.APPLICATION_JSON);
+           // builder.addPart("metadata", new FileBody(new File(objectMapper.writeValueAsString(request)),ContentType.APPLICATION_JSON,"metadata"));
+            httpPost.setEntity(builder.build());
+            log.info("resp"+httpPost.getEntity().toString());
+            HttpResponse response = httpclient.execute(httpPost);
+
+            URL obj = new URL(processorEndpoint);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("POST");
+            con.setUseCaches(false);
+            con.setDoOutput(true); // indicates POST method
+            con.setDoInput(true);
+            con.setRequestProperty("Connection", "Keep-Alive");
+            con.setRequestProperty("Cache-Control", "no-cache");
+            con.setRequestProperty(
+                    "Content-Type", "multipart/form-data;boundary=" + boundary);
+            DataOutputStream dataOutputStream = new DataOutputStream(con.getOutputStream());
+
+            dataOutputStream.writeBytes(twoHyphens + boundary + crlf);
+            dataOutputStream.writeBytes("Content-Disposition: form-data; name=\"" +
+                   "mediaFile"+ "\";filename=\"" +
+                    request.getFilename()  + "\"" + crlf);
+            dataOutputStream.writeBytes(crlf);
+            try (FileInputStream fis = new FileInputStream(fileDirectory+request.getFilename())) {
+                byte[] buffer = new byte[64*1024];// 64 k buffer
+                int len ;
+                while ((len = fis.read(buffer)) > 0) {
+                    dataOutputStream.write(buffer,0,len);
+                }
+            }
+            dataOutputStream.flush();
+            dataOutputStream.close();
+            return new RecordResponse(SUCCEED, response.toString(), null);
         }
-        catch (JsonProcessingException jpe) {
-            log.error("JsonProcessingException on ", jpe);
-            return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, ERROR_PARSING_EXCEPTION));
+        catch (JsonProcessingException e) {
+            log.error("JsonProcessingException on ", e);
+            errorMessage = ERROR_PARSING_EXCEPTION;
+        } catch (URISyntaxException e) {
+            log.error("URISyntaxException on ", e);
+            errorMessage = ERROR_URI_CREATING;
+        } catch (IOException e) {
+            errorMessage = ERROR_CONNECTION_HTTP;
+            log.error("IOException on ", e);
         }
+        return new RecordResponse(FAILED, "", new Error(HttpStatus.UNPROCESSABLE_ENTITY, errorMessage));
     }
 }
 

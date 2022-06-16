@@ -13,6 +13,10 @@ public class RecordingUtil {
     public static final String ERROR_NO_CONTENT_TABLE = "Table does not have any element";
     public static final String ERROR_URL_ENDPOINT = "URI is not absolute";
     public static final String ERROR_PARSING_EXCEPTION = "The object cannot parse to json format";
-
+    public static final String ERROR_URI_CREATING= "The uri  given string violates RFC 2396";
+    public static final String ERROR_CONNECTION_HTTP = "The file cannot sent via http request please check params";
+    public static final String boundary =  "*****";
+    public static final String crlf = "\r\n";
+    public static final String twoHyphens = "--";
 
 }
