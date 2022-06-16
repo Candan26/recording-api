@@ -237,9 +237,10 @@ public class RecordServiceImpl implements RecordService {
                 int len ;
                 while ((len = fis.read(buffer)) > 0) {
                     dataOutputStream.write(buffer,0,len);
+                    dataOutputStream.flush();
                 }
             }
-            dataOutputStream.flush();
+
             dataOutputStream.close();
             return new RecordResponse(SUCCEED, response.toString(), null);
         }
