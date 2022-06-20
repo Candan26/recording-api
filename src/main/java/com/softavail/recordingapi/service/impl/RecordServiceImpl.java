@@ -20,8 +20,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.FormBodyPart;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -188,60 +190,18 @@ public class RecordServiceImpl implements RecordService {
         String errorMessage;
 
         try {
-            /*
-            File file = new File( fileDirectory+request.getFilename());
-            FileSystemResource value = new FileSystemResource(file);
-            HttpHeaders headers = new HttpHeaders();
-            RestTemplate restTemplate = new RestTemplate();
-            MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            multipartBodyBuilder.part("metadata",objectMapper.writeValueAsString(request),MediaType.APPLICATION_JSON);
-            multipartBodyBuilder.part("mediaFile", value,MediaType.MULTIPART_FORM_DATA);
-            // multipart/form-data request body
-            MultiValueMap<String, HttpEntity<?>> multipartBody = multipartBodyBuilder.build();
-            // The complete http request body.
-            HttpEntity<MultiValueMap<String, HttpEntity<?>>> httpEntity = new HttpEntity<>(multipartBody, headers);
-            log.info(httpEntity.toString());
-            //String result = restTemplate.postForEntity(processorEndpoint, httpEntity, String.class).getBody();
-            //return new RecordResponse(SUCCEED, result, null);
-            */
             HttpClient httpclient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(new URI(processorEndpoint));
-            httpPost.setHeader("Content-type", "multipart/form-data");
+            httpPost.setHeader("Content-Type", "multipart/form-data");
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
             builder.addTextBody("metadata",objectMapper.writeValueAsString(request),ContentType.APPLICATION_JSON);
-           // builder.addPart("metadata", new FileBody(new File(objectMapper.writeValueAsString(request)),ContentType.APPLICATION_JSON,"metadata"));
+            try (FileInputStream fis = new FileInputStream(fileDirectory+request.getFilename())) {
+                builder.addPart("mediaFile", new InputStreamBody(fis,ContentType.MULTIPART_FORM_DATA,request.getFilename()));
+            }
             httpPost.setEntity(builder.build());
             log.info("resp"+httpPost.getEntity().toString());
             HttpResponse response = httpclient.execute(httpPost);
-
-            URL obj = new URL(processorEndpoint);
-            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-            con.setRequestMethod("POST");
-            con.setUseCaches(false);
-            con.setDoOutput(true); // indicates POST method
-            con.setDoInput(true);
-            con.setRequestProperty("Connection", "Keep-Alive");
-            con.setRequestProperty("Cache-Control", "no-cache");
-            con.setRequestProperty(
-                    "Content-Type", "multipart/form-data;boundary=" + boundary);
-            DataOutputStream dataOutputStream = new DataOutputStream(con.getOutputStream());
-
-            dataOutputStream.writeBytes(twoHyphens + boundary + crlf);
-            dataOutputStream.writeBytes("Content-Disposition: form-data; name=\"" +
-                   "mediaFile"+ "\";filename=\"" +
-                    request.getFilename()  + "\"" + crlf);
-            dataOutputStream.writeBytes(crlf);
-            try (FileInputStream fis = new FileInputStream(fileDirectory+request.getFilename())) {
-                byte[] buffer = new byte[64*1024];// 64 k buffer
-                int len ;
-                while ((len = fis.read(buffer)) > 0) {
-                    dataOutputStream.write(buffer,0,len);
-                    dataOutputStream.flush();
-                }
-            }
-
-            dataOutputStream.close();
             return new RecordResponse(SUCCEED, response.toString(), null);
         }
         catch (JsonProcessingException e) {
