@@ -190,18 +190,18 @@ public class RecordServiceImpl implements RecordService {
         String errorMessage;
 
         try {
+            HttpResponse response =null;
             HttpClient httpclient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(new URI(processorEndpoint));
-            httpPost.setHeader("Content-Type", "multipart/form-data");
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
             builder.addTextBody("metadata",objectMapper.writeValueAsString(request),ContentType.APPLICATION_JSON);
             try (FileInputStream fis = new FileInputStream(fileDirectory+request.getFilename())) {
                 builder.addPart("mediaFile", new InputStreamBody(fis,ContentType.MULTIPART_FORM_DATA,request.getFilename()));
+                httpPost.setEntity(builder.build());
+                log.info("resp"+httpPost.getEntity().toString());
+                response = httpclient.execute(httpPost);
             }
-            httpPost.setEntity(builder.build());
-            log.info("resp"+httpPost.getEntity().toString());
-            HttpResponse response = httpclient.execute(httpPost);
             return new RecordResponse(SUCCEED, response.toString(), null);
         }
         catch (JsonProcessingException e) {
